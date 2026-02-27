@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXIS — AI Assistant</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_chatbot.css') }}">
+
+    <!-- Marked (markdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath:  [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']],
+                processEscapes: true
+            },
+            options: {
+                skipHtmlTags: ['script','noscript','style','textarea','pre']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <!-- ── NAVBAR ── -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="logo-wrap">
+                <div class="logo-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 19h20L12 2z"/>
+                    </svg>
+                </div>
+                <span class="logo-text">AXIS</span>
+            </div>
+            <div class="nav-sep"></div>
+            <span class="nav-badge">GPT-4o</span>
+        </div>
+
+        <span class="nav-center" id="chat-title">New Conversation</span>
+
+        <div class="nav-right">
+            <div class="status-pill">
+                <span class="status-dot"></span>
+                Online
+            </div>
+            <button class="icon-btn" onclick="newChat()" title="New chat">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+            </button>
+            <button class="icon-btn danger" onclick="newChat()" title="Clear chat">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                    <path d="M10 11v6M14 11v6"/>
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ── SHELL ── -->
+    <div class="shell">
+
+        <!-- FEED -->
+        <div class="feed" id="feed">
+
+            <!-- Welcome screen -->
+            <div class="welcome" id="welcome">
+                <div class="welcome-logo">
+                    <div class="welcome-icon">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L2 19h20L12 2z"/>
+                        </svg>
+                    </div>
+                    <span class="welcome-title">AXIS</span>
+                </div>
+                <h2>What can I help with?</h2>
+                <p>Powered by GPT-4o — I remember the full conversation.</p>
+                <div class="welcome-box">
+                    <textarea id="welcome-input" placeholder="Ask me anything..." rows="5"></textarea>
+                    <div class="welcome-box-footer">
+                        <span class="welcome-hint">
+                            <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for newline
+                        </span>
+                        <button class="welcome-send" onclick="sendFromWelcome()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5"/>
+                                <polyline points="5 12 12 5 19 12"/>
+                            </svg>
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /feed -->
+
+        <!-- INPUT DOCK (hidden until first message) -->
+        <div class="dock hidden" id="dock">
+            <div class="dock-inner">
+                <div class="input-wrap">
+                    <textarea
+                        id="main-input"
+                        placeholder="Message AXIS..."
+                        rows="1"
+                        onkeydown="handleKey(event)"
+                        oninput="resize(this)"
+                    ></textarea>
+                    <button class="send-btn" id="send-btn" onclick="sendMessage()">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="19" x2="12" y2="5"/>
+                            <polyline points="5 12 12 5 19 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="dock-hint"><kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for newline</p>
+            </div>
+        </div>
+
+    </div><!-- /shell -->
+
+    <script>
+        marked.setOptions({ breaks: true, gfm: true });
+
+        /*
+         * renderContent — the ONLY job here is to stop marked.js from
+         * mangling LaTeX. Python (app.py) already cleaned the raw text.
+         *
+         * Approach: stash all math blocks as placeholders → run marked
+         * → restore the original math strings → let MathJax render.
+         */
+        function renderContent(text) {
+            // Strip any MathJax error strings the LLM may have echoed
+            text = text.replace(/Missing \\left or extra \\right\.?/g, '');
+            text = text.replace(/Missing or unrecognized delimiter for \\right\.?/g, '');
+
+            const stash = [];
+
+            function save(m) {
+                stash.push(m);
+                return `\x00MATH${stash.length - 1}\x00`;
+            }
+
+            // Stash display math \[ ... \]
+            text = text.replace(/\\\[[\s\S]*?\\\]/g, save);
+            // Stash inline math \( ... \)
+            text = text.replace(/\\\([\s\S]*?\\\)/g, save);
+
+            // Run marked on the math-free text
+            let html = marked.parse(text);
+
+            // Restore stashed math verbatim
+            html = html.replace(/\x00MATH(\d+)\x00/g, (_, i) => stash[+i]);
+
+            return html;
+        }
+
+        /* ── DOM refs ── */
+        const feed      = document.getElementById('feed');
+        const mainInput = document.getElementById('main-input');
+        const sendBtn   = document.getElementById('send-btn');
+        const welcome   = document.getElementById('welcome');
+        const chatTitle = document.getElementById('chat-title');
+        const wInput    = document.getElementById('welcome-input');
+        const dock      = document.getElementById('dock');
+
+        let loading  = false;
+        let msgCount = 0;
+
+        /* ── Welcome textarea ── */
+        wInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFromWelcome(); }
+        });
+
+        function sendFromWelcome() {
+            const t = wInput.value.trim();
+            if (!t) return;
+            mainInput.value = t;
+            sendMessage();
+        }
+
+        /* ── Main input ── */
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        }
+
+        function resize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+        }
+
+        /* ── Helpers ── */
+        function now() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function escHtml(t) {
+            return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        /* ── Render a message row ── */
+        function addMessage(role, content) {
+            welcome.style.display = 'none';
+            dock.classList.remove('hidden');
+            msgCount++;
+
+            if (role === 'user' && msgCount === 1)
+                chatTitle.textContent = content.length > 42 ? content.slice(0,42)+'…' : content;
+
+            const row = document.createElement('div');
+            row.className = `msg-row ${role}`;
+
+            const av = document.createElement('div');
+            av.className = 'avatar';
+            av.innerHTML = role === 'assistant'
+                ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2z"/></svg>'
+                : 'U';
+
+            const col  = document.createElement('div');
+            col.className = 'msg-col';
+
+            const meta = document.createElement('div');
+            meta.className = 'msg-meta';
+            meta.innerHTML = `<span class="sender">${role === 'user' ? 'You' : 'AXIS'}</span><span class="msg-time">${now()}</span>`;
+
+            const bub  = document.createElement('div');
+            bub.className = 'bubble';
+            bub.innerHTML = role === 'assistant' ? renderContent(content) : escHtml(content);
+
+            col.appendChild(meta);
+            col.appendChild(bub);
+            if (role === 'user') { row.appendChild(col); row.appendChild(av); }
+            else                  { row.appendChild(av);  row.appendChild(col); }
+
+            feed.appendChild(row);
+            feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+
+            if (window.MathJax && window.MathJax.typesetPromise)
+                MathJax.typesetPromise([row]).catch(e => console.warn('MathJax:', e));
+        }
+
+        /* ── Typing indicator ── */
+        function showTyping() {
+            const row = document.createElement('div');
+            row.className = 'msg-row assistant';
+            row.id = 'typing';
+
+            const av = document.createElement('div');
+            av.className = 'avatar';
+            av.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2z"/></svg>';
+
+            const col  = document.createElement('div');
+            col.className = 'msg-col';
+
+            const meta = document.createElement('div');
+            meta.className = 'msg-meta';
+            meta.innerHTML = '<span class="sender">AXIS</span><span class="msg-time">typing…</span>';
+
+            const bub = document.createElement('div');
+            bub.className = 'bubble typing';
+            bub.innerHTML = '<span></span><span></span><span></span>';
+
+            col.appendChild(meta);
+            col.appendChild(bub);
+            row.appendChild(av);
+            row.appendChild(col);
+            feed.appendChild(row);
+            feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+        }
+
+        function hideTyping() {
+            const el = document.getElementById('typing');
+            if (el) el.remove();
+        }
+
+        /* ── Send ── */
+        async function sendMessage() {
+            if (loading) return;
+            const text = mainInput.value.trim();
+            if (!text) return;
+
+            mainInput.value = '';
+            mainInput.style.height = 'auto';
+            addMessage('user', text);
+
+            loading = true;
+            sendBtn.disabled = true;
+            sendBtn.classList.add('loading');
+            showTyping();
+
+            try {
+                const res  = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+                hideTyping();
+                addMessage('assistant', data.reply || '⚠️ Something went wrong.');
+            } catch {
+                hideTyping();
+                addMessage('assistant', '⚠️ Network error. Please check your connection.');
+            } finally {
+                loading = false;
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('loading');
+                mainInput.focus();
+            }
+        }
+
+        /* ── New chat ── */
+        async function newChat() {
+            await fetch('/clear', { method: 'POST' });
+            Array.from(feed.children).forEach(c => { if (c.id !== 'welcome') c.remove(); });
+            welcome.style.display = 'flex';
+            dock.classList.add('hidden');
+            chatTitle.textContent = 'New Conversation';
+            msgCount = 0;
+            mainInput.value = '';
+            mainInput.style.height = 'auto';
+            wInput.value = '';
+            mainInput.focus();
+        }
+
+        mainInput.focus();
+    </script>
+</body>
+</html>
