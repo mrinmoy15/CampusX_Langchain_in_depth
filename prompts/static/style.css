@@ -1,0 +1,74 @@
+/* style.css */
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column; /* This stacks the Title above the Form */
+    align-items: center;    /* This centers everything horizontally */
+    justify-content: center;
+    color: #333;
+    padding: 20px;
+}
+
+h1 {
+    color: white;           /* White looks better on the purple background */
+    font-size: 2.5rem;
+    margin-bottom: 30px;    /* Adds space between title and form */
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3); /* Makes it pop */
+}
+
+form {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 450px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    background: #764ba2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+}
+
+button:hover {
+    background: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.result {
+    margin-top: 25px;
+    background: #f0f4ff;
+    border-left: 5px solid #764ba2;
+    padding: 15px;
+    border-radius: 5px;
+}

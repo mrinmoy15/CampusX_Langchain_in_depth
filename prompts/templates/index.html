@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Tool</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- 1. Robust MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    
+    <!-- 2. The FULL, working CDN Link (Must be exact) -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+    <h1>Research Tool</h1>
+    
+    <form method="POST">
+        <label>Select Research Paper Name</label>
+        <select name="paper_input">
+            {% for paper in ["Attention Is All You Need", "BERT: Pre-training of Deep Bidirectional Transformers", "GPT-3: Language Models are Few-Shot Learners", "Diffusion Models Beat GANs on Image Synthesis"] %}
+                <option value="{{ paper }}" {% if paper == paper_input %}selected{% endif %}>{{ paper }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Select Explanation Style</label>
+        <select name="style_input">
+            {% for style in ["Beginner-Friendly", "Technical", "Code-Oriented", "Mathematical"] %}
+                <option value="{{ style }}" {% if style == style_input %}selected{% endif %}>{{ style }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Select Explanation Length</label>
+        <select name="length_input">
+            {% for length in ["Short (1-2 paragraphs)", "Medium (3-5 paragraphs)", "Long (detailed explanation)"] %}
+                <option value="{{ length }}" {% if length == length_input %}selected{% endif %}>{{ length }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Summarize</button>
+    </form>
+
+    {% if summary %}
+    <div class="result tex2jax_process">
+        <h3>Summary:</h3>
+        <!-- 3. Using |safe is MANDATORY to prevent Flask from escaping symbols -->
+        <div id="summary-content" style="white-space: pre-wrap; line-height: 1.6;">{{ summary|safe }}</div>
+    </div>
+    {% endif %}
+
+    <!-- 4. The "Safety Net" Script: Forces MathJax to look for math even if backslashes are wonky -->
+    <script>
+        function triggerMathJax() {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                console.log("Triggering MathJax typeset...");
+                window.MathJax.typesetPromise().catch((err) => console.log("MathJax Error: " + err.message));
+            }
+        }
+
+        // Run when page loads
+        window.addEventListener('load', triggerMathJax);
+        
+        // Run again after a short delay just in case the summary was injected late
+        setTimeout(triggerMathJax, 1000);
+    </script>
+</body>
+</html>
