@@ -8,6 +8,7 @@ langchain-openai
 langchain-experimental
 langchain-tavily
 langchain-chroma
+langsmith
 sentence-transformers
 faiss-cpu
 tiktoken
@@ -38,5 +39,7 @@ grandalf
 pypdf
 ipykernel
 youtube-transcript-api
+duckduckgo-search
+ddgs
 
 
