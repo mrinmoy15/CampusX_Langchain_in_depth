@@ -1,5 +1,5 @@
-# LANGCHAIN AND LANGGRAPH 
-In this module we will learn in depth about both Langchain framework and how those frameworks are revolutionizing the development of LLM powered agentic applications. This course is taught by Nitesh and the link to the courses are provided below.  
+# LANGCHAIN
+In this module we will learn in depth about Langchain framework and how it is revolutionizing the development of LLM powered generative ai applications. This course is taught by Nitesh and the link to the courses are provided below.  
 - [LangChain Playlist](https://www.youtube.com/watch?v=pSVk-5WemQ0&list=PLKnIA16_RmvaTbihpo4MtzVm4XOQa0ER0&index=2)  
 
   
